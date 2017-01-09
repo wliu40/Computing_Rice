@@ -1,0 +1,42 @@
+http://www.codeskulptor.org/#user42_cfAhnxPecU_4.py
+
+"""
+Merge function for 2048 game.
+"""
+
+def merge(line):
+    """
+    Function that merges a single row or column in 2048.
+    """
+    # replace with your code
+    temp_line = []
+    for element in line:
+        if element is not 0:
+            temp_line.append(element)
+    while(len(temp_line) < len(line)):
+          temp_line.append(0)
+    
+    print ""       
+    print temp_line
+
+    
+    result_line = []
+    result_line.append(temp_line[0])
+    cnt = 1
+    flag = 0
+    
+    while cnt < len(line):
+
+        if temp_line[cnt] == result_line[-1] and flag == 0:
+            result_line[-1] *= 2
+            flag = 1
+        else:
+            result_line.append(temp_line[cnt])
+            flag = 0
+        cnt += 1
+        
+    while(len(result_line) < len(line)):
+          result_line.append(0)
+    
+    
+    return result_line
