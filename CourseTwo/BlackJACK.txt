@@ -1,0 +1,105 @@
+http://www.codeskulptor.org/#user38_tGbhua1Xw5_3.py
+
+# Demonstration of a magnifier on a map
+
+import simplegui
+import math
+import random
+
+# 1521x1818 pixel map of native American language
+# source - Gutenberg project
+is_start = False
+pos_center = [640,600]
+image_start = simplegui.load_image("http://png-4.findicons.com/files/icons/1786/\
+oxygen_refit/128/media_playback_start.png")
+image_welcome = simplegui.load_image('https://lh4.ggpht.com/jCJdh0OBaldDqPpO4s5X63\
+IlziK1Bgr6OaaOxMynJEE4ddrQyIIEGUDnaVONpOYFug=h900')
+image_background = simplegui.load_image('http://www.iplayblackjack.com/images/background.jpg')
+image_eric = simplegui.load_image('http://upload.wikimedia.org/wikipedia/en/7/77/EricCartman.png')
+
+image_kyle = simplegui.load_image('http://img1.wikia.nocookie.net/__cb20110317001632/southparkfanon/images/a/ad/Kyle.png')
+# Image dimensions
+START_WIDTH = 128
+START_HEIGHT = 128
+
+WEL_WIDTH = 1280
+WEL_HEIGHT = 800
+
+BACK_WIDTH = 1286
+BACK_HEIGHT = 886
+
+ERIC_WIDTH = 300
+ERIC_HEIGHT = 275
+
+KYLE_WIDTH = 300
+KYLE_HEIGHT = 364
+
+num_eric = 5
+num_kyle = 5
+
+# Scaling factor
+SCALE = 1
+
+def fun1(pos1, pos2):
+    return math.sqrt((pos1[0]-pos2[0])**2 +(pos1[1]-pos2[1])**2)
+
+
+
+
+# Event handlers
+# Move magnifier to clicked position
+def click(pos):
+    global mag_pos, click_times, is_start
+    mag_pos = list(pos)
+
+    if fun1(pos_center, mag_pos) < 64:
+        
+        is_start = True
+        print is_start
+    
+    
+
+# Draw map and magnified region
+def draw(canvas):
+    # Draw map
+    global is_start
+
+   
+        
+    canvas.draw_image(image_welcome, 
+            [WEL_WIDTH // 2, WEL_HEIGHT // 2], [WEL_WIDTH, WEL_HEIGHT], 
+            [WEL_WIDTH // 2, WEL_HEIGHT // 2], [WEL_WIDTH, WEL_HEIGHT])  
+    
+    canvas.draw_image(image_start, 
+            [START_WIDTH // 2, START_HEIGHT // 2], [START_WIDTH, START_HEIGHT], 
+            pos_center, [START_WIDTH, START_HEIGHT])
+    canvas.draw_text('Click to Start', [pos_center[0]-100,pos_center[1]+80], 40, 'White')
+    
+    if is_start: 
+        canvas.draw_image(image_background, 
+                [BACK_WIDTH // 2, BACK_HEIGHT // 2], [WEL_WIDTH, WEL_HEIGHT], 
+                [WEL_WIDTH // 2, WEL_HEIGHT // 2], [WEL_WIDTH, WEL_HEIGHT]) 
+        for i in range(0,num_eric):
+            
+            canvas.draw_image(image_eric, 
+                    [ERIC_WIDTH // 2, ERIC_HEIGHT // 2], [ERIC_WIDTH, ERIC_HEIGHT], 
+                    [WEL_WIDTH // 4+i*80, WEL_HEIGHT // 2], [ERIC_WIDTH//4, ERIC_HEIGHT//4]) 
+            
+        for j in range(0,num_kyle):
+            
+            canvas.draw_image(image_kyle, 
+                    [KYLE_WIDTH // 2, KYLE_HEIGHT // 2], [KYLE_WIDTH, KYLE_HEIGHT], 
+                    [WEL_WIDTH // 4+j*80, WEL_HEIGHT // 2-100], [KYLE_WIDTH//4, KYLE_HEIGHT//4]) 
+        
+
+    
+# Create frame for scaled map
+frame = simplegui.create_frame("Map magnifier", WEL_WIDTH, WEL_HEIGHT)
+
+# register even handlers
+frame.set_mouseclick_handler(click)    
+frame.set_draw_handler(draw)
+
+# Start frame
+frame.start()
+

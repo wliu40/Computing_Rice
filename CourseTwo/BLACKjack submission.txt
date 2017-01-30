@@ -1,0 +1,353 @@
+
+http://www.codeskulptor.org/#user38_Mt8dCkLwUT_22.py
+http://www.codeskulptor.org/#user38_Mt8dCkLwUT_24.py
+
+# Mini-project #6 - Blackjack
+
+import simplegui
+import random
+import math
+
+# load card sprite - 936x384 - source: jfitz.com
+CARD_SIZE = (72, 96)
+CARD_CENTER = (36, 48)
+card_images = simplegui.load_image("http://storage.googleapis.com/codeskulptor-assets/cards_jfitz.png")
+
+CARD_BACK_SIZE = (72, 96)
+CARD_BACK_CENTER = (36, 48)
+card_back = simplegui.load_image("http://storage.googleapis.com/codeskulptor-assets/card_jfitz_back.png") 
+#------------------------------------------------------------------------------
+image_welcome = simplegui.load_image('https://www.dropbox.com/s/iitd4fn30vwiaqo/South-Park-Wallpaper.jpg?dl=1')
+image_background = simplegui.load_image('https://www.dropbox.com/s/7ijd24c0vvgr58z/South_Park_Archives_background2.jpg?dl=1')
+image_eric = simplegui.load_image('http://upload.wikimedia.org/wikipedia/en/7/77/EricCartman.png')
+image_kyle = simplegui.load_image('http://img1.wikia.nocookie.net/__cb20110317001632\
+/southparkfanon/images/a/ad/Kyle.png')
+image_win = simplegui.load_image('https://www.dropbox.com/s/uaznd4ufxi3af3a/Funny-Baby-Picture.jpg?dl=1')
+image_game_over = simplegui.load_image('https://www.dropbox.com/s/t5kasw2dl7y8d28/gameover2.png?dl=1')
+
+WEL_WIDTH = 1280
+WEL_HEIGHT = 800
+
+BACK_WIDTH = 1280
+BACK_HEIGHT = 800
+
+ERIC_WIDTH = 300
+ERIC_HEIGHT = 275
+
+KYLE_WIDTH = 300
+KYLE_HEIGHT = 364
+
+WIN_WIDTH = 500
+WIN_HEIGHT = 330
+
+GAME_OVER_WIDTH = 1000
+GAME_OVER_HEIGHT = 854
+pos_center = [870/2,130/2]
+SCALE = 1
+HIT_POS   = [1140,405]
+STAND_POS = [1140,500]
+DEAL_POS  = [1140,600]
+
+HIT_WIDTH  = 250/2
+HIT_HEIGHT = 80/2
+STAND_WIDTH  = 250/2
+STAND_HEIGHT = 80/2
+DEAL_WIDTH  = 250/2
+DEAL_HEIGHT = 100/2
+
+# initialize some useful global variables
+in_play = False
+outcome = ""
+#score = 0
+
+# define globals for cards
+SUITS = ('C', 'S', 'H', 'D')
+RANKS = ('A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K')
+VALUES = {'A':1, '2':2, '3':3, '4':4, '5':5, '6':6, '7':7, '8':8, '9':9, 'T':10, 'J':10, 'Q':10, 'K':10}
+COLOR = {0:'Yellow',1:'Blue',2:'White',3:'Black',4:'Red'}
+is_start = False
+t = 0
+num_eric = 3
+num_kyle = 3
+        
+# define card class
+class Card:
+    def __init__(self, suit, rank):
+        if (suit in SUITS) and (rank in RANKS):
+            self.suit = suit
+            self.rank = rank
+        else:
+            self.suit = None
+            self.rank = None
+            print "Invalid card: ", suit, rank
+
+    def __str__(self):
+        return self.suit +', ' + self.rank
+
+    def get_suit(self):
+        return self.suit
+
+    def get_rank(self):
+        return self.rank
+
+    def draw(self, canvas, pos):
+        card_loc = (CARD_CENTER[0] + CARD_SIZE[0] * RANKS.index(self.rank), 
+                    CARD_CENTER[1] + CARD_SIZE[1] * SUITS.index(self.suit))
+        
+        canvas.draw_image(card_images, card_loc, CARD_SIZE,\
+                          [pos[0] + CARD_CENTER[0], pos[1] + CARD_CENTER[1]], [CARD_SIZE[0], CARD_SIZE[1]])
+        
+# define hand class
+class Hand:
+    def __init__(self):
+        self.card_list = []
+   
+    def __str__(self):
+        s = ''
+        for item in self.card_list:
+            s += '[' + str(item) + '] ' 
+        return s       
+        # return a string representation of a hand
+
+    def add_card(self, card):        
+
+        self.card_list.append(card)     
+        print self.card_list
+        # add a card object to a hand
+
+    def get_value(self):
+        # count aces as 1, if the hand has an ace, then add 10 to hand value if it doesn't bust
+        num_aces = 0
+        sum_value = 0
+        for item in self.card_list:
+            if item.rank == 'A':
+                num_aces += 1 
+
+        if num_aces >= 1:
+            for item in self.card_list:                
+                sum_value += VALUES[item.rank]                
+            if sum_value + 10 <= 21:
+                sum_value += 10
+         
+        else:
+            for item in self.card_list:
+                sum_value += VALUES[item.rank] 
+        return sum_value
+    
+    # compute the value of the hand, see Blackjack video
+   
+    def draw(self, canvas, pos):
+
+        for item in self.card_list:
+            x = self.card_list.index(item)            
+            item.draw(canvas, [pos[0] + 72*x, pos[1]])
+        # draw a hand on the canvas, use the draw method for cards
+# define deck class 
+class Deck:
+    def __init__(self):        
+        self.card_deck = []
+        for i in SUITS:            
+            for j in RANKS:                
+                self.card_deck.append(Card(i,j))
+       # self.shuffle()
+       # create a Deck object
+
+    def shuffle(self):
+        random.shuffle(self.card_deck)
+        # shuffle the deck 
+        # use random.shuffle()
+
+    def deal_card(self):
+        return self.card_deck.pop()
+        
+        # deal a card object from the deck
+    
+    def __str__(self):
+        pass
+    # return a string representing the deck
+    
+#define event handlers for buttons
+def deal():
+    
+    global outcome, in_play, hand_player, deck, hand_dealer
+    outcome = ''
+    in_play = True
+    hand_player = Hand()
+    hand_dealer = Hand()
+    
+    deck = Deck()
+    deck.shuffle()
+    
+    hand_player.add_card(deck.deal_card())
+    hand_player.add_card(deck.deal_card())
+    
+    hand_dealer.add_card(deck.deal_card())
+    hand_dealer.add_card(deck.deal_card())
+    in_play = True
+
+def hit():
+    global hand_player, score, outcome,in_play, num_eric   
+    if (in_play):
+        hand_player.add_card(deck.deal_card())        
+        if hand_player.get_value() > 21:
+            #score -= 1
+            num_eric -= 1
+            outcome = 'You lost!!'
+            in_play = False
+     
+    # replace with your code below  
+    
+    # if the hand is in play, hit the player
+   
+    # if busted, assign a message to outcome, update in_play and score
+       
+def stand():    
+    global hand_player, hand_dealer, in_play, score, outcome, num_eric, num_kyle, kyle_lost, game_over    
+    while (in_play):
+        if hand_dealer.get_value() >= hand_player.get_value():
+            in_play = False
+            #score -= 1  
+            num_eric -= 1
+            outcome = 'You lost!!'
+        else:
+            while (hand_dealer.get_value() < hand_player.get_value()):
+                hand_dealer.add_card(deck.deal_card())
+                if hand_dealer.get_value() >= 17:
+                    break;
+            if hand_dealer.get_value() >= hand_player.get_value() and hand_dealer.get_value() < 21:
+                #score -= 1
+                num_eric -= 1
+                outcome = 'You lost!!'
+            else:
+                #score += 1
+                num_kyle -= 1
+                outcome = 'You win!!'     
+            in_play = False                       
+    #hand_dealer.add_card(deck.deal_card())    
+    print hand_player.get_value()      
+    # replace with your code below
+   
+    # if hand is in play, repeatedly hit dealer until his hand has value 17 or more
+
+    # assign a message to outcome, update in_play and score
+
+# draw handler
+def fun1(pos1, pos2):
+    return math.sqrt((pos1[0]-pos2[0])**2 +(pos1[1]-pos2[1])**2)
+
+class Image():
+    def __init__(self,name, center, width, height, pos, scaler):
+        
+        self.name = name
+        self.center = center;
+        self.width = width
+        self.height = height
+        self.pos = pos
+        self.scaler = scaler        
+    def draw():        
+        canvas.draw_image(self.name,self.center, [self.width, self.height],
+                        self.pos, [self.width/self.scaler, self.height.scaler])
+
+# Event handlers
+# Move magnifier to clicked position
+def click(pos):
+    global click_pos, click_times, is_start, num_eric
+    click_pos = list(pos)
+
+    if fun1(pos_center, click_pos) < 100/2:        
+        is_start = True
+        timer.stop()
+       #print is_start
+    if is_start:
+       if click_pos[0] < (HIT_POS[0] + HIT_WIDTH/2)/2 and click_pos[0] > (HIT_POS[0] - HIT_WIDTH/2)/2\
+         and click_pos[1] < (HIT_POS[1]+ HIT_HEIGHT/2)/2 and click_pos[1] > (HIT_POS[1] - HIT_HEIGHT/2)/2:
+            hit()
+       if click_pos[0] < (STAND_POS[0] + STAND_WIDTH/2)/2 and click_pos[0] > (STAND_POS[0] - STAND_WIDTH/2)/2\
+         and click_pos[1] < (STAND_POS[1]+ STAND_HEIGHT/2)/2 and click_pos[1] > (STAND_POS[1] - STAND_HEIGHT/2)/2:
+            stand()
+       if click_pos[0] < (DEAL_POS[0] + DEAL_WIDTH/2)/2 and click_pos[0] > (DEAL_POS[0] - DEAL_WIDTH/2)/2\
+         and click_pos[1] < (DEAL_POS[1]+ DEAL_HEIGHT/2)/2 and click_pos[1] > (DEAL_POS[1] - DEAL_HEIGHT/2)/2:
+            deal()
+    
+def time():
+    global t
+    if t == 4:
+        t = -1
+    t += 1
+
+def draw(canvas):
+    # test to make sure that card.draw works, replace with your code below
+    global hand_player, hand_dealer,outcome, is_start, t, num_eric, game_over, kyle_lost
+    canvas.draw_image(image_welcome, 
+            [WEL_WIDTH //2, WEL_HEIGHT //2], [WEL_WIDTH, WEL_HEIGHT], 
+            [WEL_WIDTH //4, WEL_HEIGHT //4], [WEL_WIDTH/2, WEL_HEIGHT/2])     
+    canvas.draw_text('Click Kenney to start', [50/2,700/2], 30, COLOR[t])
+    
+    if is_start: 
+        
+        canvas.draw_image(image_background, 
+                [BACK_WIDTH // 2, BACK_HEIGHT // 2], [WEL_WIDTH, WEL_HEIGHT], 
+                [WEL_WIDTH // 4, WEL_HEIGHT // 4], [WEL_WIDTH/2, WEL_HEIGHT/2])  
+
+        for i in range(0,num_eric):
+            
+            canvas.draw_image(image_eric, 
+                    [ERIC_WIDTH // 2, ERIC_HEIGHT // 2], [ERIC_WIDTH, ERIC_HEIGHT], 
+                    [WEL_WIDTH // 10+i*40, WEL_HEIGHT // 4+100], [ERIC_WIDTH//8, ERIC_HEIGHT//8]) 
+            
+        for j in range(0,num_kyle):            
+            canvas.draw_image(image_kyle, 
+                    [KYLE_WIDTH // 2, KYLE_HEIGHT // 2], [KYLE_WIDTH, KYLE_HEIGHT], 
+                    [WEL_WIDTH // 10+j*40, WEL_HEIGHT // 4-150], [KYLE_WIDTH//9, KYLE_HEIGHT//9])   
+#----------------------------------------------------------------------------- 
+        hand_dealer.draw(canvas, [100/2, 160/2])    
+        hand_player.draw(canvas, [100/2, 360/2])   
+
+        if num_eric == 0:
+            canvas.draw_image(image_game_over,
+                    [GAME_OVER_WIDTH // 2, GAME_OVER_HEIGHT // 2], [GAME_OVER_WIDTH, GAME_OVER_HEIGHT], 
+                    [WEL_WIDTH//4, WEL_HEIGHT//4], [WEL_WIDTH/2, WEL_HEIGHT/2])
+        if num_kyle == 0:
+            canvas.draw_image(image_win, 
+                    [WIN_WIDTH // 2, WIN_HEIGHT // 2], [WIN_WIDTH, WIN_HEIGHT], 
+                    [WEL_WIDTH//4, WEL_HEIGHT//4], [WIN_WIDTH*1.2, WIN_HEIGHT*1.2])
+        if in_play:               
+            canvas.draw_image(card_back, CARD_BACK_CENTER, CARD_SIZE, \
+                              [(50+CARD_CENTER[0]), (80+CARD_CENTER[1])], CARD_SIZE)
+        if num_eric !=0 and num_kyle != 0:
+            
+            canvas.draw_text(outcome, [450/2,670/2], 100/2, 'Black')    
+            canvas.draw_text('You have '+str(num_eric)+' Eric left!!', [450/2,750/2], 20, 'Black')
+            canvas.draw_text('Dealer', [100/2,120/2], 20, 'Black')
+            canvas.draw_text('Player', [100/2,620/2], 20, 'Black')
+def restart():
+    global is_start, t, num_eric, num_kyle, outcome
+    is_start = False
+    t = 0
+    num_eric = 3
+    num_kyle = 3
+    outcome = ''
+    timer.start()
+    return deal()
+
+# initialization frame
+frame = simplegui.create_frame("Blackjack", WEL_WIDTH/2, WEL_HEIGHT/2)
+#frame.set_canvas_background("Green")
+
+#create buttons and canvas callback
+#frame.add_button("Deal", deal, 200)
+#frame.add_button("Hit",  hit, 200)
+#frame.add_button("Stand", stand, 200)
+frame.add_button("restart", restart, 200)
+
+frame.set_mouseclick_handler(click)    
+frame.set_draw_handler(draw)
+timer = simplegui.create_timer(500,time)
+
+
+# get things rolling
+deal()
+frame.start()
+timer.start()
+
+# remember to review the gradic rubric
